@@ -17,14 +17,19 @@ class ZkMemberUser extends DataExtension {
 			return true;
 		}
 
-		foreach ($groups as $g) {
-			if ($g->Code == 'users-manager') {
-				if (!Permission::checkMember($this->owner, 'ADMIN')) {
-					$retVal = true;
-					break;
-				}
-			}
-		}
+        if(Config::inst()->get('ZkMemberUser', 'limit_users')){
+            $groups = $groups->exclude('Code', 'users-manager');
+            return ($this->owner->inGroups($groups));
+        }else{
+            foreach ($groups as $g) {
+                if ($g->Code == 'users-manager') {
+                    if (!Permission::checkMember($this->owner, 'ADMIN')) {
+                        $retVal = true;
+                        break;
+                    }
+                }
+            }
+        }
 		
 		return $retVal;
 	}
@@ -49,5 +54,3 @@ class ZkMemberUser extends DataExtension {
 	}
 
 }
-
-?>

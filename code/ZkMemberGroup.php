@@ -26,20 +26,26 @@ class ZkMemberGroup extends DataExtension {
 		$retVal = false;
 
 		$current = Member::currentUser();
-		$groups = $current->Groups();
 
 		if (Permission::checkMember($current, 'ADMIN')) {
 			return true;
 		}
-		
-		foreach ($groups as $g) {
-			if ($g->Code == 'users-manager') {
-				if ($this->owner->Code !== 'administrators') {
-					$retVal = true;
-					break;
-				}
-			}
-		}
+
+        //if we want to only allow them to edit the groups there in check for that
+        if(Config::inst()->get('ZkMemberGroup', 'limit_groups')){
+            if($this->owner->Code != 'users-manager' && $this->owner->Code !== 'administrators' && $current->inGroup($this->owner)){
+                return true;
+            }
+        }else{
+            $groups = $current->Groups();
+            foreach ($groups as $g) {
+                if ($g->Code != 'users-manager' && $this->owner->Code !== 'administrators' && $current->inGroup($g)) {
+                    $retVal = true;
+                    break;
+                }
+            }
+        }
+
 		return $retVal;
 	}
 
@@ -76,5 +82,3 @@ class ZkMemberGroup extends DataExtension {
 	}
 
 }
-
-?>
