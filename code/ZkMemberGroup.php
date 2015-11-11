@@ -16,7 +16,7 @@ class ZkMemberGroup extends DataExtension {
 		$parentID = $fields->fieldByName('Root.Members.ParentID');
 		$parentID->setDisabledItems(array( DataObject::get_one('Group', "Code='administrators'")->ID ));
 
-        if(!Permission::check('ADMIN', Member::currentUser())){
+        if(!Permission::checkMember(Member::currentUser(), 'ADMIN')){
             $grid = $fields->dataFieldByName('Members');
             $config = $grid->getConfig();
             $config->removeComponentsByType('GridFieldPaginator');
