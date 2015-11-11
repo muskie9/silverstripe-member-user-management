@@ -7,3 +7,6 @@ Member:
 Group:
   extensions:
     - ZkMemberGroup
+SecurityAdmin:
+  extensions:
+    - ZkSecurityAdmin
