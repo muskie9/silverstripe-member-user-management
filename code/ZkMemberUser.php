@@ -2,6 +2,30 @@
 
 class ZkMemberUser extends DataExtension {
 
+
+    public function updateCMSFields(FieldList $fields){
+
+        if(!Permission::checkMember(Member::currentUser(), 'ADMIN')){
+            $current = Member::currentUser();
+            $groupsMap = array();
+            foreach($current->Groups()->exclude('Code', 'users-manager')->toArray() as $group) {
+                // Listboxfield values are escaped, use ASCII char instead of &raquo;
+                $groupsMap[$group->ID] = $group->getBreadcrumbs(' > ');
+            }
+            asort($groupsMap);
+
+            $groupsField = ListboxField::create('DirectGroups', singleton('Group')->i18n_plural_name())
+                ->setMultiple(true)
+                ->setSource($groupsMap)
+                ->setAttribute(
+                    'data-placeholder',
+                    _t('Member.ADDGROUP', 'Add group', 'Placeholder text for a dropdown'));
+
+            $fields->insertBefore($groupsField,'DateFormat');
+        }
+
+    }
+
 	/**
 	 * Check if the current user can modify the user
 	 * @param Member $member
