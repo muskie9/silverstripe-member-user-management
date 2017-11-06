@@ -7,38 +7,35 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Group;
+use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\Security;
 
 class MemberGroup extends DataExtension
 {
-
     /**
      * Remove the administrators group from the possible parent group
-     *
-     * @todo this check should be done in core code, since the dropdown can be simply
-     *                crafted for injecting administrators group ID
      *
      * @param FieldList $fields
      */
     public function updateCMSFields(FieldList $fields)
     {
-        parent::updateCMSFields($fields);
-
-        /* @var $parentID DropdownField */
-        $parentID = $fields->fieldByName('Root.Members.ParentID');
-        $parentID->setDisabledItems(array(DataObject::get_one('Group', "Code='administrators'")->ID));
+        if ($this->owner->canEdit() && !Permission::checkMember(Security::getCurrentUser(), 'ADMIN')) {
+            $fields->dataFieldByName('ParentID')->setDisabledItems([
+                DataObject::get_one('Group', "Code='administrators'")->ID,
+            ]);
+        };
     }
 
     /**
      * Check if the current user can modify the group
      *
-     * @return boolean
+     * @param Member $member
+     *
+     * @return bool
      */
-    private function isAdmin()
+    private function isAdmin(Member $member)
     {
-        $member = Security::getCurrentUser();
-
         if ($member == null) {
             return false;
         }
@@ -55,12 +52,30 @@ class MemberGroup extends DataExtension
     }
 
     /**
-     * @param $member
+     * @param null|Member $member
      *
      * @return bool
      */
-    public function canCreate($member)
+    public function canCreate($member = null)
     {
+        if (!$member instanceof Member) {
+            $member = Security::getCurrentUser();
+        }
+
+        return $this->isAdmin($member);
+    }
+
+    /**
+     * @param null|Member $member
+     *
+     * @return bool
+     */
+    public function canEdit($member = null)
+    {
+        if (!$member instanceof Member) {
+            $member = Security::getCurrentUser();
+        }
+
         return $this->isAdmin($member);
     }
 
@@ -69,28 +84,30 @@ class MemberGroup extends DataExtension
      *
      * @return bool
      */
-    public function canEdit($member)
+    public function canView($member = null)
     {
+        if (!$member instanceof Member) {
+            $member = Security::getCurrentUser();
+        }
+
+        if ($member === null) {
+            return false;
+        }
+
         return $this->isAdmin($member);
     }
 
     /**
-     * @param $member
+     * @param null|Member $member
      *
      * @return bool
      */
-    public function canView($member)
+    public function canDelete($member = null)
     {
-        return $this->isAdmin($member);
-    }
+        if (!$member instanceof Member) {
+            $member = Security::getCurrentUser();
+        }
 
-    /**
-     * @param $member
-     *
-     * @return bool
-     */
-    public function canDelete($member)
-    {
         return $this->isAdmin($member);
     }
 
@@ -108,7 +125,6 @@ class MemberGroup extends DataExtension
             $usersManagerGroup = Group::create();
             $usersManagerGroup->Code = 'users-manager';
             $usersManagerGroup->Title = _t('Group.DefaultGroupTitleUsersManager', 'Users Manager');
-            $usersManagerGroup->Sort = 0;
             $usersManagerGroup->write();
             Permission::grant($usersManagerGroup->ID, 'CMS_ACCESS_SecurityAdmin');
         }

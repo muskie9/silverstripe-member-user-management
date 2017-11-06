@@ -2,15 +2,20 @@ SilverStripe\Security\Group:
   manageusers:
     Title: 'Users Manager'
     Code: 'users-manager'
+  samplegroup:
+    Title: 'Sample Group'
+    Code: 'sample-group'
 SilverStripe\Security\Member:
   nopermission:
     FirstName: No
     Surname: Permission
     Email: nopermission@test.com
+    Groups: =>SilverStripe\Security\Group.samplegroup
   nopermission2:
     FirstName: No
     Surname: Permission 2
     Email: nopermission2@test.com
+    Groups: =>SilverStripe\Security\Group.samplegroup
   permission:
     FirstName: Has
     Surname: Permission
