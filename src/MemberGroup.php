@@ -2,10 +2,8 @@
 
 namespace Zirak\MemberUserManagement\Extension;
 
-use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\DataExtension;
-use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -22,7 +20,7 @@ class MemberGroup extends DataExtension
     {
         if ($this->owner->canEdit() && !Permission::checkMember(Security::getCurrentUser(), 'ADMIN')) {
             $fields->dataFieldByName('ParentID')->setDisabledItems([
-                DataObject::get_one('Group', "Code='administrators'")->ID,
+                Group::get()->filter('Code', 'administrators')->first()->ID,
             ]);
         };
     }
@@ -40,11 +38,11 @@ class MemberGroup extends DataExtension
             return false;
         }
 
-        if (Permission::checkMember($member, 'ADMIN')) {
+        if ($member->inGroup('users-manager')) {
             return true;
         }
 
-        if ($member->inGroup('users-manager') && $this->owner->Code !== 'administrators') {
+        if (Permission::checkMember($member, 'ADMIN')) {
             return true;
         }
 
@@ -76,7 +74,7 @@ class MemberGroup extends DataExtension
             $member = Security::getCurrentUser();
         }
 
-        return $this->isAdmin($member);
+        return $this->isAdmin($member) && $this->owner->Code !== 'administrators';
     }
 
     /**
@@ -108,7 +106,7 @@ class MemberGroup extends DataExtension
             $member = Security::getCurrentUser();
         }
 
-        return $this->isAdmin($member);
+        return $this->isAdmin($member) && $this->owner->Code !== 'administrators';
     }
 
     /**
